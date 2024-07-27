@@ -12,12 +12,15 @@ import toast from "react-hot-toast";
 
 type CartContextType = {
   cartTotalQty: number;
+  cartTotalAmount: number;
   cartProducts: CartProductType[] | null;
   handleAddProductToCart: (product: CartProductType) => void;
   handleRemoveProductFromCart: (product: CartProductType) => void;
   handleQtyIncrease: (product: CartProductType) => void;
   handleQtyDecrease: (product: CartProductType) => void;
   handleClearCart: () => void;
+  paymentIntent: string | null;
+  handleSetPaymentIntent: (paymentIntent: string | null) => void;
 };
 export const CartContext = createContext<CartContextType | null>(null);
 
@@ -30,11 +33,15 @@ export const CartContextProvider = (props: Props) => {
   const [cartProducts, setCartProducts] = useState<CartProductType[] | null>(
     null
   );
-
+  const [cartTotalAmount, setCartTotalAmount] = useState(0);
+  const [paymentIntent, setPaymentIntent] = useState<string | null>(null);
   useEffect(() => {
     const cartItems: any = localStorage.getItem("eShopCartItems");
     const parsedCartItems = cartItems ? JSON.parse(cartItems) : null;
+    const eShopPaymentIntent: any = localStorage.getItem("eShopPaymentIntent");
+    const paymentIntent: string | null = JSON.parse(eShopPaymentIntent);
     setCartProducts(parsedCartItems);
+    setPaymentIntent(paymentIntent);
   }, []);
 
   const handleAddProductToCart = useCallback((product: CartProductType) => {
@@ -115,24 +122,46 @@ export const CartContextProvider = (props: Props) => {
   }, [cartProducts]);
 
   useEffect(() => {
-    if (cartProducts) {
-      const total = cartProducts.reduce(
-        (acc: number, item: CartProductType) =>
-          Number(item.price) * item.quantity + acc,
-        0
-      );
-      setCartTotalQty(total);
-    }
+    const getTotals = () => {
+      if (cartProducts) {
+        const { total, qty } = cartProducts?.reduce(
+          (acc: any, item: CartProductType) => {
+            const itemTotal = Number(item.price) * item.quantity;
+            acc.total += itemTotal;
+            acc.qty += item.quantity;
+            return acc;
+          },
+          {
+            total: 0,
+            qty: 0,
+          }
+        );
+        setCartTotalQty(qty);
+        setCartTotalAmount(total);
+      }
+    };
+    getTotals();
   }, [cartProducts]);
+
+  const handleSetPaymentIntent = useCallback(
+    (value: string | null) => {
+      setPaymentIntent(value);
+      localStorage.setItem("eShopPaymentIntent", JSON.stringify(value));
+    },
+    [paymentIntent]
+  );
 
   const value = {
     cartTotalQty,
+    cartTotalAmount,
     cartProducts,
     handleAddProductToCart,
     handleRemoveProductFromCart,
     handleQtyIncrease,
     handleQtyDecrease,
     handleClearCart,
+    handleSetPaymentIntent,
+    paymentIntent,
   };
   return <CartContext.Provider value={value} {...props} />;
 };

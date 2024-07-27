@@ -1,0 +1,23 @@
+import Container from "@/app/components/container";
+import ManageOrdersClient from "./ManageOrdersClient";
+
+import { getCurrentUser } from "@/actions/getCurrentUser";
+import NullData from "@/app/components/NullData";
+import getOrders from "@/actions/getOrders";
+
+const AdminManageOrders = async () => {
+  const orders = await getOrders();
+  const currentUser = await getCurrentUser();
+
+  if (!currentUser || currentUser.role !== "ADMIN") {
+    return <NullData title="You are not authorized" />;
+  }
+
+  return (
+    <Container>
+      <ManageOrdersClient orders={orders} />
+    </Container>
+  );
+};
+
+export default AdminManageOrders;
