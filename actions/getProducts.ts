@@ -13,7 +13,7 @@ export default async function getProducts(params: IProductParams) {
       searchString = "";
     }
     let query: any = {};
-    if (category) {
+    if (category !== undefined) {
       query.category = category;
     }
     const products = await prisma.product.findMany({
